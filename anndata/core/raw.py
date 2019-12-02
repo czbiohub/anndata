@@ -31,14 +31,14 @@ class Raw:
             self._var = _gen_dataframe(var, X.shape[1], ['var_names'])
             self._varm = AxisArrays(self, 1, vals=convert_to_dict(varm))
         else:
-            self._X = None if adata.isbacked else adata.X.copy()
+            self._X = None if adata.filename else adata.X.copy()
             self._var = adata.var.copy()
             self._varm = AxisArrays(self, 1, vals=adata.varm)
 
     @property
     def X(self):
         # TODO: Handle unsorted array of integer indices for h5py.Datasets
-        if self._adata.isbacked:
+        if self._adata.filename:
             if not self._adata.file.is_open:
                 self._adata.file.open()
             # Handle legacy file formats:
@@ -54,7 +54,7 @@ class Raw:
             if isinstance(X, h5py.Group):
                 X = SparseDataset(X)
             # Check if we need to subset
-            if self._adata.isview:
+            if self._adata.is_view:
                 # TODO: As noted above, implement views of raw
                 #       so we can know if we need to subset by var
                 return X[self._adata._oidx, slice(None)]
@@ -100,7 +100,7 @@ class Raw:
         if isinstance(oidx, (int, np.integer)):
             oidx = slice(oidx, oidx + 1, 1)
 
-        if not self._adata.isbacked:
+        if not self._adata.filename:
             X = _subset(self.X, (oidx, vidx))
         else:
             X = None
