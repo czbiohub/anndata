@@ -35,7 +35,7 @@ class Raw:
             self._varm = AxisArrays(self, 1, adata.varm.copy())
 
     @property
-    def X(self):
+    def X(self) -> Union[SparseDataset, np.ndarray, sparse.spmatrix]:
         # TODO: Handle unsorted array of integer indices for h5py.Datasets
         if self._adata.isbacked:
             if not self._adata.file.is_open:
