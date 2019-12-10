@@ -450,7 +450,7 @@ def read_h5ad(
 
 
 def _read_raw(
-    f, as_sparse=(), rdasp=None, *, attrs=("X", 'var', "varm"), filename=None
+    f, as_sparse=(), rdasp=None, *, attrs=("X", "var", "varm"), filename=None
 ):
     if as_sparse:
         assert rdasp is not None, 'must supply rdasp if as_sparse is supplied'
@@ -458,10 +458,9 @@ def _read_raw(
     if "X" in attrs and "raw/X" in f:
         read_x = rdasp if "raw/X" in as_sparse else read_attribute
         raw["X"] = read_x(f["raw/X"])
-    if "var" in attrs and "raw/var" in f:
-        raw["var"] = read_dataframe(f["raw/var"])
-    if "varm" in attrs and "raw/varm" in f:
-        raw["varm"] = read_attribute(f["raw/varm"])
+    for v in ("var", "varm"):
+        if v in attrs and f"raw/{v}" in f:
+            raw[v] = read_attribute(f[f"raw/{v}"])
     _read_legacy_raw_into(
         f, raw, read_dataframe, read_attribute, attrs=attrs, filename=filename
     )
