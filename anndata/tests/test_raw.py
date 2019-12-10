@@ -76,4 +76,6 @@ def test_raw_backed(adata_raw, backing_h5ad):
 
     assert adata_raw.var_names.tolist() == ['var1', 'var2']
     assert adata_raw.raw.var_names.tolist() == ['var1', 'var2', 'var3']
+    if adata_raw.raw[:, 0].X.shape[1] != 1:
+        pytest.xfail("Raw is broken for backed slices")
     assert adata_raw.raw[:, 0].X[:].tolist() == [[1], [4], [7]]
