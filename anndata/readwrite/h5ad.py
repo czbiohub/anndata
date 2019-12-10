@@ -341,9 +341,7 @@ def read_h5ad_backed(
         if k in f:  # Backwards compat
             d[k] = read_dataframe(f[k])
 
-    if "raw" in f:
-        d["raw"] = _read_raw(f)
-    _read_legacy_raw_h5ad(f, d.setdefault("raw", {}), filename)
+    d["raw"] = _read_raw(f, filename=filename)
 
     X_dset = f.get("X", None)
     if X_dset is None:
@@ -424,18 +422,18 @@ def read_h5ad(
         d = {}
         for k in f.keys():
             # Backwards compat for old raw
-            if k.startswith("raw."):
+            if k == "raw" or k.startswith("raw."):
                 continue
             if k == "X" and "X" in as_sparse:
                 d[k] = rdasp(f[k])
-            elif k == "raw":
-                d[k] = _read_raw(f, as_sparse, rdasp)
             elif k == "raw":
                 assert False, "unexpected raw format"
             elif k in {"obs", "var"}:
                 d[k] = read_dataframe(f[k])
             else:  # Base case
                 d[k] = read_attribute(f[k])
+
+        d["raw"] = _read_raw(f, as_sparse, rdasp)
 
         X_dset = f.get("X", None)
         if X_dset is None:
@@ -447,25 +445,28 @@ def read_h5ad(
         else:
             raise ValueError()
 
-        _read_legacy_raw_h5ad(f, d.setdefault("raw", {}), filename)
-
     _clean_uns(d)  # backwards compat
 
     return AnnData(**d)
 
 
-def _read_raw(f, as_sparse=(), rdasp=None):
+def _read_raw(
+    f, as_sparse=(), rdasp=None, *, attrs=("X", 'var', "varm"), filename=None
+):
     if as_sparse:
         assert rdasp is not None, 'must supply rdasp if as_sparse is supplied'
-    read_x = rdasp if "raw/X" in as_sparse else read_attribute
-    raw = dict(X=read_x(f["raw/X"]), var=read_dataframe(f["raw/var"]))
-    if "raw/varm" in f:
+    raw = {}
+    if "X" in attrs and "raw/X" in f:
+        read_x = rdasp if "raw/X" in as_sparse else read_attribute
+        raw["X"] = read_x(f["raw/X"])
+    if "var" in attrs and "raw/var" in f:
+        raw["var"] = read_dataframe(f["raw/var"])
+    if "varm" in attrs and "raw/varm" in f:
         raw["varm"] = read_attribute(f["raw/varm"])
+    _read_legacy_raw_into(
+        f, raw, read_dataframe, read_attribute, attrs=attrs, filename=filename
+    )
     return raw
-
-
-def _read_legacy_raw_h5ad(f, raw, fn):
-    return _read_legacy_raw_into(f, raw, read_dataframe, read_attribute, fn)
 
 
 @report_read_key_on_error

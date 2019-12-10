@@ -254,15 +254,13 @@ def read_zarr(store: Union[str, Path, MutableMapping, zarr.Group]) -> AnnData:
         else:  # Base case
             d[k] = read_attribute(f[k])
 
-    _read_legacy_raw_zarr(f, d.setdefault("raw", {}))
+    _read_legacy_raw_into(
+        f, d.setdefault("raw", {}), read_dataframe, read_attribute
+    )
 
     _clean_uns(d)
 
     return AnnData(**d)
-
-
-def _read_legacy_raw_zarr(f, raw):
-    return _read_legacy_raw_into(f, raw, read_dataframe, read_attribute)
 
 
 @singledispatch
