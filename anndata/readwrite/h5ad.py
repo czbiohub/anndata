@@ -329,7 +329,6 @@ def read_h5ad_backed(
     filename: Union[str, Path], mode: Literal['r', 'r+']
 ) -> AnnData:
     d = dict(filename=filename, filemode=mode)
-    raw = {}
 
     f = h5py.File(filename, mode)
 
@@ -341,7 +340,7 @@ def read_h5ad_backed(
         if k in f:  # Backwards compat
             d[k] = read_dataframe(f[k])
 
-    d["raw"] = _read_raw(f, filename=filename)
+    d["raw"] = _read_raw(f, attrs={"var", "varm"}, filename=filename)
 
     X_dset = f.get("X", None)
     if X_dset is None:
