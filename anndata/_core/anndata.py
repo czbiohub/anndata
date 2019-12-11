@@ -496,9 +496,7 @@ class AnnData(metaclass=utils.DeprecationMixinMeta):
 
             raw = {
                 # Read raw dict from file
-                **_read_raw(
-                    self.file, attrs={"var", "varm"}, filename=self.filename
-                ),
+                **_read_raw(self.file, attrs={"var", "varm"}),
                 # override retrieved entries with specified ones
                 **convert_to_dict(raw),
             }

@@ -199,9 +199,9 @@ def report_write_key_on_error(func):
 
 
 def _read_legacy_raw_into(
-    f, raw, read_df, read_attr, *, attrs=("X", "var", "varm"), filename=None
+    f, raw, read_df, read_attr, *, attrs=("X", "var", "varm")
 ):
-    what = f'File {filename}' if filename else 'Store'
+    what = f'File {f.filename}' if hasattr(f, "filename") else 'Store'
     # Backwards compat for reading legacy raw
     assert not (
         raw and any(k.startswith("raw.") for k in f)

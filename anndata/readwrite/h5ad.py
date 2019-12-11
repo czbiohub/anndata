@@ -4,7 +4,8 @@ from functools import _find_impl, partial
 from warnings import warn
 from pathlib import Path
 from types import MappingProxyType
-from typing import Callable, Sequence, Mapping, Type, TypeVar, Union
+from typing import Callable, Type, TypeVar, Union
+from typing import Collection, Sequence, Mapping
 
 import h5py
 import numpy as np
@@ -13,6 +14,7 @@ from pandas.api.types import is_categorical_dtype
 from scipy import sparse
 
 from .._core.sparse_dataset import SparseDataset
+from .._core.file_backing import AnnDataFileManager
 from .._core.anndata import AnnData
 from .._core.raw import Raw
 from ..compat import _from_fixed_length_strings, _clean_uns, Literal
@@ -340,7 +342,7 @@ def read_h5ad_backed(
         if k in f:  # Backwards compat
             d[k] = read_dataframe(f[k])
 
-    d["raw"] = _read_raw(f, attrs={"var", "varm"}, filename=filename)
+    d["raw"] = _read_raw(f, attrs={"var", "varm"})
 
     X_dset = f.get("X", None)
     if X_dset is None:
@@ -450,7 +452,11 @@ def read_h5ad(
 
 
 def _read_raw(
-    f, as_sparse=(), rdasp=None, *, attrs=("X", "var", "varm"), filename=None
+    f: Union[h5py.File, AnnDataFileManager],
+    as_sparse: Collection[str] = (),
+    rdasp: Callable[[h5py.Dataset], sparse.spmatrix] = None,
+    *,
+    attrs: Collection[str] = ("X", "var", "varm"),
 ):
     if as_sparse:
         assert rdasp is not None, 'must supply rdasp if as_sparse is supplied'
@@ -461,9 +467,7 @@ def _read_raw(
     for v in ("var", "varm"):
         if v in attrs and f"raw/{v}" in f:
             raw[v] = read_attribute(f[f"raw/{v}"])
-    _read_legacy_raw_into(
-        f, raw, read_dataframe, read_attribute, attrs=attrs, filename=filename
-    )
+    _read_legacy_raw_into(f, raw, read_dataframe, read_attribute, attrs=attrs)
     return raw
 
 
