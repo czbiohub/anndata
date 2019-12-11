@@ -492,20 +492,15 @@ class AnnData(metaclass=utils.DeprecationMixinMeta):
             assert not isinstance(
                 raw, Raw
             ), "got raw from other adata but also filename?"
-            from ..readwrite.h5ad import _read_raw
-
-            raw = {
-                # Read raw dict from file
-                **_read_raw(self.file, attrs={"var", "varm"}),
-                # override retrieved entries with specified ones
-                **convert_to_dict(raw),
-            }
-        if raw and isinstance(raw, cabc.Mapping):
-            raw = Raw(self, **raw)
-        elif raw:  # is a Raw from another AnnData
-            raw = raw.copy()
-            raw._adata = self
-        self._raw = raw if raw else None
+            if {"raw", "raw.X"} & set(self.file):
+                raw = dict(X=None, **raw)
+        if not raw:
+            del self.raw
+        elif isinstance(raw, cabc.Mapping):
+            self._raw = Raw(self, **raw)
+        else:  # is a Raw from another AnnData
+            self._raw = raw.copy()
+            self._raw._adata = self
 
         # clean up old formats
         self._clean_up_old_format(uns)

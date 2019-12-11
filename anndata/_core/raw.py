@@ -25,14 +25,17 @@ class Raw:
 
         self._adata = adata
         self._n_obs = adata.n_obs
-        if X is not None:
-            self._X = X
-            self._var = _gen_dataframe(var, X.shape[1], ['var_names'])
-            self._varm = AxisArrays(self, 1, varm)
-        else:
-            self._X = None if adata.isbacked else adata.X.copy()
-            self._var = adata.var.copy()
-            self._varm = AxisArrays(self, 1, adata.varm.copy())
+        if adata.isbacked and X is not None:
+            raise ValueError("Cannot specify X if adata is backed")
+        self._X = X if adata.isbacked or X is not None else adata.X.copy()
+        self._var = (
+            adata.var.copy()
+            if var is None
+            else _gen_dataframe(var, self.X.shape[1], ['var_names'])
+        )
+        self._varm = AxisArrays(
+            self, 1, adata.varm.copy() if varm is None else varm
+        )
 
     @property
     def X(self) -> Union[SparseDataset, np.ndarray, sparse.spmatrix]:
