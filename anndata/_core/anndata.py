@@ -1409,7 +1409,7 @@ class AnnData(metaclass=utils.DeprecationMixinMeta):
                     X = X.reshape(self.shape)
             else:
                 dtype = "float32"
-            adata = AnnData(
+            return AnnData(
                 X=X,
                 obs=self.obs.copy(),
                 var=self.var.copy(),
@@ -1422,13 +1422,10 @@ class AnnData(metaclass=utils.DeprecationMixinMeta):
                 varm=self.varm.copy(),
                 obsp=self.obsp.copy(),
                 varp=self.varp.copy(),
+                raw=self.raw,  # copies automatically
                 layers=self.layers.copy(),
                 dtype=dtype,
             )
-            if self._raw is not None:
-                adata._raw = self._raw.copy()
-                adata._raw._adata = adata
-            return adata
         else:
             from ..readwrite import read_h5ad
 
