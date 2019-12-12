@@ -26,7 +26,7 @@ setup(
         for l in Path('requirements.txt').read_text('utf-8').splitlines()
     ],
     python_requires='>=3.6',
-    packages=find_namespace_packages(include=['anndata.*']),
+    packages=find_namespace_packages(include=['anndata', 'anndata.*']),
     zip_safe=False,
     classifiers=[
         'Environment :: Console',
