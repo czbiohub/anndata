@@ -25,45 +25,44 @@ class Raw:
 
         self._adata = adata
         self._n_obs = adata.n_obs
-        if adata.isbacked and X is not None:
+        # construct manually
+        if adata.isbacked == (X is None):
+            self._X = X
+            self._var = _gen_dataframe(var, self.X.shape[1], ['var_names'])
+            self._varm = AxisArrays(self, 1, varm)
+        elif X is None:  # construct from adata
+            self._X = adata.X.copy()
+            self._var = adata.var.copy()
+            self._varm = AxisArrays(self, 1, adata.varm.copy())
+        elif adata.isbacked:
             raise ValueError("Cannot specify X if adata is backed")
-        self._X = X if adata.isbacked or X is not None else adata.X.copy()
-        self._var = (
-            adata.var.copy()
-            if var is None
-            else _gen_dataframe(var, self.X.shape[1], ['var_names'])
-        )
-        self._varm = AxisArrays(
-            self, 1, adata.varm.copy() if varm is None else varm
-        )
 
     @property
     def X(self) -> Union[SparseDataset, np.ndarray, sparse.spmatrix]:
         # TODO: Handle unsorted array of integer indices for h5py.Datasets
-        if self._adata.isbacked:
-            if not self._adata.file.is_open:
-                self._adata.file.open()
-            # Handle legacy file formats:
-            if "raw/X" in self._adata.file:
-                X = self._adata.file["raw/X"]
-            elif "raw.X" in self._adata.file:
-                X = self._adata.file['raw.X']  # Backwards compat
-            else:
-                raise AttributeError(
-                    f"Could not find dataset for raw X in file: "
-                    f"{self._adata.file.filename}."
-                )
-            if isinstance(X, h5py.Group):
-                X = SparseDataset(X)
-            # Check if we need to subset
-            if self._adata.is_view:
-                # TODO: As noted above, implement views of raw
-                #       so we can know if we need to subset by var
-                return X[self._adata._oidx, slice(None)]
-            else:
-                return X
-        else:
+        if not self._adata.isbacked:
             return self._X
+        if not self._adata.file.is_open:
+            self._adata.file.open()
+        # Handle legacy file formats:
+        if "raw/X" in self._adata.file:
+            X = self._adata.file["raw/X"]
+        elif "raw.X" in self._adata.file:
+            X = self._adata.file['raw.X']  # Backwards compat
+        else:
+            raise AttributeError(
+                f"Could not find dataset for raw X in file: "
+                f"{self._adata.file.filename}."
+            )
+        if isinstance(X, h5py.Group):
+            X = SparseDataset(X)
+        # Check if we need to subset
+        if self._adata.is_view:
+            # TODO: As noted above, implement views of raw
+            #       so we can know if we need to subset by var
+            return X[self._adata._oidx, slice(None)]
+        else:
+            return X
 
     @property
     def shape(self):
