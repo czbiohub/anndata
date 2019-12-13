@@ -499,8 +499,7 @@ class AnnData(metaclass=utils.DeprecationMixinMeta):
         elif isinstance(raw, cabc.Mapping):
             self._raw = Raw(self, **raw)
         else:  # is a Raw from another AnnData
-            self._raw = raw.copy()
-            self._raw._adata = self
+            self._raw = Raw(self, raw._X, raw.var, raw.varm)
 
         # clean up old formats
         self._clean_up_old_format(uns)
@@ -1422,7 +1421,7 @@ class AnnData(metaclass=utils.DeprecationMixinMeta):
                 varm=self.varm.copy(),
                 obsp=self.obsp.copy(),
                 varp=self.varp.copy(),
-                raw=self.raw,  # copies automatically
+                raw=self.raw.copy(),
                 layers=self.layers.copy(),
                 dtype=dtype,
             )
